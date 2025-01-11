@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { contractABI } from "../utils/contractABI"; // Import ABI from utils folder
+import '../styles/shared.css';
+import Header from "./Header";
+import Footer from "./Footer";
 
 const contractAddress = "0xa0393b172c532f3b2b0cba1088822579c8659019"; // Replace with your deployed contract address
 
@@ -93,55 +96,69 @@ const AuthorityDashboard = () => {
   };
 
   return (
-    <div className="authority-dashboard">
-      <h1>Authority Dashboard</h1>
-      <p>Connected Account: {account}</p>
-
-      {/* <div className="new-report">
-        <h2>Submit a New Report</h2>
-        <input
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-        />
-        <button onClick={handleSubmitReport}>Submit Report</button>
-      </div> */}
-
-      <div className="reports-list">
-        <h2>Reports</h2>
-        {reports.length === 0 ? (
-          <p>No reports available.</p>
-        ) : (
-          reports.map((report) => (
-            <div key={report.id} className="report-item">
-              <h3>Report ID: {report.id}</h3>
-              <p><strong>Category:</strong> {report.category}</p>
-              <p><strong>Description:</strong> {report.description}</p>
-              <p><strong>Location:</strong> {report.location}</p>
-              <p><strong>Points:</strong> {report.points}</p>
-              <p><strong>Upvotes:</strong> {report.upvotes}</p>
-              <p><strong>Downvotes:</strong> {report.downvotes}</p>
-              <p><strong>Status:</strong> {report.isResolved ? "Resolved" : "Not Resolved"}</p>
-
-              {/* {!report.isResolved && (
-                <button onClick={() => handleResolveReport(report.id)}>Resolve Report</button>
-              )} */}
+    <div className="page-container">
+      <Header />
+      
+      <main className="gradient-bg main-content">
+        <div className="dashboard-container">
+          <h1 className="page-title">Authority Dashboard</h1>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1rem',
+            marginBottom: '2rem'
+          }}>
+            <div className="card" style={{ textAlign: 'center' }}>
+              <h3 style={{ color: 'var(--text-secondary)' }}>Total Reports</h3>
+              <p style={{ fontSize: '2rem', color: 'var(--primary)' }}>{reports.length}</p>
             </div>
-          ))
-        )}
-      </div>
+            <div className="card" style={{ textAlign: 'center' }}>
+              <h3 style={{ color: 'var(--text-secondary)' }}>Pending</h3>
+              <p style={{ fontSize: '2rem', color: 'var(--error)' }}>
+                {reports.filter(r => !r.isResolved).length}
+              </p>
+            </div>
+            <div className="card" style={{ textAlign: 'center' }}>
+              <h3 style={{ color: 'var(--text-secondary)' }}>Resolved</h3>
+              <p style={{ fontSize: '2rem', color: 'var(--success)' }}>
+                {reports.filter(r => r.isResolved).length}
+              </p>
+            </div>
+          </div>
+
+          <div className="dashboard-grid">
+            {reports.map((report) => (
+              <div key={report.id} className="card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <span className="status-pill pending">Report #{report.id}</span>
+                  <span className={`status-pill ${report.isResolved ? 'resolved' : 'pending'}`}>
+                    {report.isResolved ? '✓ Resolved' : '⚠ Pending'}
+                  </span>
+                </div>
+                
+                <h3 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>{report.category}</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>{report.description}</p>
+                <p style={{ color: 'var(--text-secondary)' }}>📍 {report.location}</p>
+                
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '1rem', 
+                  marginTop: '1rem',
+                  padding: '1rem 0',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <span>👍 {report.upvotes}</span>
+                  <span>👎 {report.downvotes}</span>
+                  <span>🏆 {report.points} pts</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };

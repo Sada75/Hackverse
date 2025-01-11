@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { contractABI } from "../utils/contractABI"; // Import ABI from utils folder
+import '../styles/shared.css';
+import Header from "./Header";
+import Footer from "./Footer";
 
 const contractAddress = "0xa0393b172c532f3b2b0cba1088822579c8659019"; // Replace with your deployed contract address
 
@@ -119,7 +122,6 @@ const ReportIssue = () => {
       const tx = await contract.markReportAsResolved(reportId);
       await tx.wait();
       alert("Report marked as resolved successfully!");
-
       // Refresh the user's reports
       fetchUserReports(contract, account);
     } catch (error) {
@@ -129,70 +131,101 @@ const ReportIssue = () => {
   };
 
   return (
-    <div className="report-issue-container">
-      <h1>Report Issue or Resolve Report</h1>
+    <div className="page-container">
+      <Header />
+      
+      <main className="gradient-bg main-content">
+        <div className="dashboard-container">
+          <h1 className="page-title">Report an Issue</h1>
+          
+          <div className="report-form-card">
+            <div className="form-grid">
+              <div className="input-group">
+                <label className="input-label">Category</label>
+                <input
+                  className="input-field"
+                  type="text"
+                  placeholder="e.g., Infrastructure, Safety, Environment"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                />
+              </div>
+              
+              <div className="input-group">
+                <label className="input-label">Description</label>
+                <textarea
+                  className="input-field"
+                  placeholder="Describe the issue in detail..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  style={{ minHeight: '120px' }}
+                />
+              </div>
+              
+              <div className="input-group">
+                <label className="input-label">Location</label>
+                <input
+                  className="input-field"
+                  type="text"
+                  placeholder="Enter the location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+              
+              <button className="button-primary" onClick={handleSubmitReport}>
+                Submit Report
+              </button>
+            </div>
+          </div>
 
-      <div className="user-type-selection">
-        <button onClick={() => setUserType("user")}>I am a User</button>
-      </div>
-
-      {userType === "user" && (
-        <div className="report-form">
-          <h2>Submit a Report</h2>
-          <input
-            type="text"
-            placeholder="Category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          />
-          <textarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-          <button onClick={handleSubmitReport}>Submit Report</button>
-        </div>
-      )}
-
-      <div className="user-reports">
-        <h2>Your Reports</h2>
-        {userReports.length > 0 ? (
-          <ul>
+          <h2 className="section-title">Your Reports</h2>
+          <div className="dashboard-grid">
             {userReports.map((report) => (
-              <li key={report.id}>
-                <p><strong>Category:</strong> {report.category}</p>
-                <p><strong>Description:</strong> {report.description}</p>
-                <p><strong>Location:</strong> {report.location}</p>
-                <p><strong>Upvotes:</strong> {report.upvotes}</p>
-                <p><strong>Downvotes:</strong> {report.downvotes}</p>
-                <p><strong>Points:</strong> {report.points}</p>
-                <p><strong>Resolved:</strong> {report.isResolved ? "Yes" : "No"}</p>
+              <div key={report.id} className="card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <span className="status-pill pending">Report #{report.id}</span>
+                  <span className={`status-pill ${report.isResolved ? 'resolved' : 'pending'}`}>
+                    {report.isResolved ? '✓ Resolved' : '⚠ Pending'}
+                  </span>
+                </div>
+                
+                <h3 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>{report.category}</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>{report.description}</p>
+                <p style={{ color: 'var(--text-secondary)' }}>📍 {report.location}</p>
+                
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '1rem', 
+                  marginTop: '1rem',
+                  padding: '1rem 0',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <button onClick={() => handleUpvote(report.id)} className="vote-button">
+                    👍 {report.upvotes}
+                  </button>
+                  <button onClick={() => handleDownvote(report.id)} className="vote-button">
+                    👎 {report.downvotes}
+                  </button>
+                  <span>🏆 {report.points} pts</span>
+                </div>
+                
                 {!report.isResolved && (
-                  <>
-                    <button onClick={() => handleUpvote(report.id)}>Upvote</button>
-                    <button onClick={() => handleDownvote(report.id)}>Downvote</button>
-                    <button onClick={() => handleMarkResolved(report.id)}>
-                      Mark as Resolved
-                    </button>
-                  </>
+                  <button 
+                    className="button-primary" 
+                    onClick={() => handleMarkResolved(report.id)}
+                    style={{ width: '100%', marginTop: '1rem' }}
+                  >
+                    Mark as Resolved
+                  </button>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
-        ) : (
-          <p>No reports found.</p>
-        )}
-      </div>
-
-      <div className="account-info">
-        <p>Connected Account: {account}</p>
-      </div>
+          </div>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
