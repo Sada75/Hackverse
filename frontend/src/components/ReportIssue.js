@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { contractABI } from "../utils/contractABI"; // Import ABI from utils folder
 
@@ -8,14 +8,12 @@ const ReportIssue = () => {
   const [userType, setUserType] = useState(""); // 'authority' or 'user'
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState(""); // New state for location
-  const [points, setPoints] = useState(0);
-  const [upvotes, setUpvotes] = useState(0);
-  const [downvotes, setDownvotes] = useState(0);
+  const [location, setLocation] = useState("");
   const [reportId, setReportId] = useState("");
   const [account, setAccount] = useState("");
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
+  const [userReports, setUserReports] = useState([]); // Store user's reports
 
   useEffect(() => {
     const initialize = async () => {
@@ -32,6 +30,9 @@ const ReportIssue = () => {
         const signer = await _provider.getSigner();
         const _contract = new ethers.Contract(contractAddress, contractABI, signer);
         setContract(_contract);
+
+        // Fetch user reports
+        fetchUserReports(_contract, accounts[0]);
       } else {
         alert("Please install MetaMask!");
       }
@@ -39,16 +40,44 @@ const ReportIssue = () => {
     initialize();
   }, []);
 
+  const fetchUserReports = async (contract, userAddress) => {
+    try {
+      const reports = [];
+      const totalReports = await contract.reportCount(); // Get the total number of reports
+      for (let i = 1; i <= totalReports; i++) {
+        const report = await contract.getReport(i);
+        if (report[0].toLowerCase() === userAddress.toLowerCase()) {
+          reports.push({
+            id: i,
+            reporter: report[0],
+            category: report[1],
+            description: report[2],
+            location: report[3],
+            points: report[4].toString(),
+            upvotes: report[5].toString(),
+            downvotes: report[6].toString(),
+            isResolved: report[7],
+          });
+        }
+      }
+      setUserReports(reports);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  };
+
   const handleSubmitReport = async () => {
-    if (category && description && location) { // Validate if location is provided
+    if (category && description && location) {
       try {
-        const tx = await contract.submitReport(category, description, location); // Pass location to contract
+        const tx = await contract.submitReport(category, description, location);
         await tx.wait();
         alert("Report submitted successfully!");
-        // Reset fields after submission
         setCategory("");
         setDescription("");
-        setLocation(""); // Reset location
+        setLocation("");
+
+        // Refresh the user's reports
+        fetchUserReports(contract, account);
       } catch (error) {
         console.error("Error submitting report:", error);
         alert("Failed to submit report.");
@@ -58,20 +87,17 @@ const ReportIssue = () => {
     }
   };
 
-  const handleResolveReport = async () => {
-    if (reportId) {
-      try {
-        const tx = await contract.markReportAsResolved(reportId);
-        await tx.wait();
-        alert("Report resolved successfully!");
-        // Reset the report ID after resolution
-        setReportId("");
-      } catch (error) {
-        console.error("Error resolving report:", error);
-        alert("Failed to resolve report.");
-      }
-    } else {
-      alert("Please provide a valid report ID.");
+  const handleMarkResolved = async (reportId) => {
+    try {
+      const tx = await contract.markReportAsResolved(reportId);
+      await tx.wait();
+      alert("Report marked as resolved successfully!");
+
+      // Refresh the user's reports
+      fetchUserReports(contract, account);
+    } catch (error) {
+      console.error("Error marking report as resolved:", error);
+      alert("Failed to mark report as resolved.");
     }
   };
 
@@ -81,7 +107,6 @@ const ReportIssue = () => {
 
       <div className="user-type-selection">
         <button onClick={() => setUserType("user")}>I am a User</button>
-        <button onClick={() => setUserType("authority")}>I am an Authority</button>
       </div>
 
       {userType === "user" && (
@@ -101,46 +126,37 @@ const ReportIssue = () => {
           <input
             type="text"
             placeholder="Location"
-            value={location} // Location input
-            onChange={(e) => setLocation(e.target.value)} // Handle location change
-          />
-          <input
-            type="number"
-            placeholder="Points"
-            value={points}
-            onChange={(e) => setPoints(Number(e.target.value))}
-            disabled
-          />
-          <input
-            type="number"
-            placeholder="Upvotes"
-            value={upvotes}
-            onChange={(e) => setUpvotes(Number(e.target.value))}
-            disabled
-          />
-          <input
-            type="number"
-            placeholder="Downvotes"
-            value={downvotes}
-            onChange={(e) => setDownvotes(Number(e.target.value))}
-            disabled
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
           />
           <button onClick={handleSubmitReport}>Submit Report</button>
         </div>
       )}
 
-      {userType === "authority" && (
-        <div className="resolve-form">
-          <h2>Resolve a Report</h2>
-          <input
-            type="text"
-            placeholder="Report ID"
-            value={reportId}
-            onChange={(e) => setReportId(e.target.value)}
-          />
-          <button onClick={handleResolveReport}>Resolve Report</button>
-        </div>
-      )}
+      <div className="user-reports">
+        <h2>Your Reports</h2>
+        {userReports.length > 0 ? (
+          <ul>
+            {userReports.map((report) => (
+              <li key={report.id}>
+                <p><strong>Category:</strong> {report.category}</p>
+                <p><strong>Description:</strong> {report.description}</p>
+                <p><strong>Location:</strong> {report.location}</p>
+                <p><strong>Upvotes:</strong> {report.upvotes}</p>
+                <p><strong>Downvotes:</strong> {report.downvotes}</p>
+                <p><strong>Resolved:</strong> {report.isResolved ? "Yes" : "No"}</p>
+                {!report.isResolved && (
+                  <button onClick={() => handleMarkResolved(report.id)}>
+                    Mark as Resolved
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No reports found.</p>
+        )}
+      </div>
 
       <div className="account-info">
         <p>Connected Account: {account}</p>

@@ -135,9 +135,9 @@ const AuthorityDashboard = () => {
               <p><strong>Downvotes:</strong> {report.downvotes}</p>
               <p><strong>Status:</strong> {report.isResolved ? "Resolved" : "Not Resolved"}</p>
 
-              {!report.isResolved && (
+              {/* {!report.isResolved && (
                 <button onClick={() => handleResolveReport(report.id)}>Resolve Report</button>
-              )}
+              )} */}
             </div>
           ))
         )}
