@@ -1,0 +1,19 @@
+<!-- app/templates/medicines.html -->
+{% extends "base.html" %}
+
+{% block title %}Medicines{% endblock %}
+
+{% block content %}
+<h1>Medicines</h1>
+<div>
+    <h2>Search Medicines</h2>
+    <form id="search-medicine-form">
+        <input type="text" class="form-control" id="query" placeholder="Enter medicine name" required>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+<div id="medicines-list">
+    <h2>Available Medicines</h2>
+    <!-- This section will be populated with medicines from the backend -->
+</div>
+{% endblock %}

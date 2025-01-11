@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Medi Help</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Medi Help</h1>
+        <h2>Chat with the PHARMACIST</h2>
+        <textarea id="userQuery" placeholder="Ask a question related to HR or office policies:"></textarea>
+        <button id="sendQuery">Send Query</button>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        document.getElementById('sendQuery').addEventListener('click', function() {
+            const userQuery = document.getElementById('userQuery').value;
+            if (!userQuery) {
+                alert("Please enter your question.");
+                return;
+            }
+
+            fetch('http://127.0.0.1:5000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: userQuery })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const answer = data.answer || "No response received.";
+                document.getElementById('response').innerText = "Assistant: " + answer;
+            })
+            .catch(error => {
+                document.getElementById('response').innerText = "Failed to process query: " + error;
+            });
+        });
+    </script>
+</body>
+</html>
+```
