@@ -207,7 +207,7 @@ const ReportIssue = () => {
                   <button onClick={() => handleDownvote(report.id)} className="vote-button">
                     👎 {report.downvotes}
                   </button>
-                  <span>🏆 {report.points} pts</span>
+                  {/* <span>🏆 {report.points} pts</span> */}
                 </div>
                 
                 {!report.isResolved && (

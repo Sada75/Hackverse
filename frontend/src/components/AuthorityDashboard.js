@@ -150,7 +150,7 @@ const AuthorityDashboard = () => {
                 }}>
                   <span>👍 {report.upvotes}</span>
                   <span>👎 {report.downvotes}</span>
-                  <span>🏆 {report.points} pts</span>
+                  {/* <span>🏆 {report.points} pts</span> */}
                 </div>
               </div>
             ))}
