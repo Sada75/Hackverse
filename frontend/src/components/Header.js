@@ -27,6 +27,12 @@ const Header = () => {
             Report Issue
           </button>
           <button 
+            className={`nav-link ${location.pathname === '/allreports' ? 'active' : ''}`}
+            onClick={() => navigate('/allreports')}
+          >
+            All Reports
+          </button>
+          <button 
             className={`nav-link ${location.pathname === '/authority-dashboard' ? 'active' : ''}`}
             onClick={() => navigate('/authority-dashboard')}
           >
