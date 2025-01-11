@@ -9,7 +9,6 @@ const ReportIssue = () => {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [reportId, setReportId] = useState("");
   const [account, setAccount] = useState("");
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
@@ -87,6 +86,34 @@ const ReportIssue = () => {
     }
   };
 
+  const handleUpvote = async (reportId) => {
+    try {
+      const tx = await contract.upvoteReport(reportId);
+      await tx.wait();
+      alert("Report upvoted successfully!");
+
+      // Refresh the user's reports
+      fetchUserReports(contract, account);
+    } catch (error) {
+      console.error("Error upvoting report:", error);
+      alert("Failed to upvote the report.");
+    }
+  };
+
+  const handleDownvote = async (reportId) => {
+    try {
+      const tx = await contract.downvoteReport(reportId);
+      await tx.wait();
+      alert("Report downvoted successfully!");
+
+      // Refresh the user's reports
+      fetchUserReports(contract, account);
+    } catch (error) {
+      console.error("Error downvoting report:", error);
+      alert("Failed to downvote the report.");
+    }
+  };
+
   const handleMarkResolved = async (reportId) => {
     try {
       const tx = await contract.markReportAsResolved(reportId);
@@ -144,11 +171,16 @@ const ReportIssue = () => {
                 <p><strong>Location:</strong> {report.location}</p>
                 <p><strong>Upvotes:</strong> {report.upvotes}</p>
                 <p><strong>Downvotes:</strong> {report.downvotes}</p>
+                <p><strong>Points:</strong> {report.points}</p>
                 <p><strong>Resolved:</strong> {report.isResolved ? "Yes" : "No"}</p>
                 {!report.isResolved && (
-                  <button onClick={() => handleMarkResolved(report.id)}>
-                    Mark as Resolved
-                  </button>
+                  <>
+                    <button onClick={() => handleUpvote(report.id)}>Upvote</button>
+                    <button onClick={() => handleDownvote(report.id)}>Downvote</button>
+                    <button onClick={() => handleMarkResolved(report.id)}>
+                      Mark as Resolved
+                    </button>
+                  </>
                 )}
               </li>
             ))}
