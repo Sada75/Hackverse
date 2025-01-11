@@ -27,7 +27,7 @@ const ReportsModal = ({ isOpen, onClose, reports }) => {
                 <div className="report-stats">
                   <span>👍 {report.upvotes}</span>
                   <span>👎 {report.downvotes}</span>
-                  <span>🏆 {report.points} pts</span>
+                  {/* <span>🏆 {report.points} pts</span> */}
                 </div>
               </div>
             ))}
