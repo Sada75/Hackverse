@@ -7,8 +7,8 @@ import Header from "./Header";
 import Footer from "./Footer";
 
 // Supabase configuration
-const supabaseUrl = "https://tayizflnglzdhygwqqvk.supabase.co"; // Replace with your Supabase project URL
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRheWl6ZmxuZ2x6ZGh5Z3dxcXZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MDIzNTcsImV4cCI6MjA1MjE3ODM1N30.PaQNZFpNoUawIxbpGaY7CgAaieBuc9Q4TF2m04SDVno"; // Replace with your Supabase anon key
+const supabaseUrl = "https://ctfksicqlnydmtqubupk.supabase.co"; // Replace with your Supabase project URL
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0ZmtzaWNxbG55ZG10cXVidXBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MjQ2MTQsImV4cCI6MjA1MjIwMDYxNH0.lNx0ezQwFSAlSBGtZb-XhDNoXaTUI6Ci4PSeYdJ7pM0"; // Replace with your Supabase anon key
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const contractAddress = "0xa0393b172c532f3b2b0cba1088822579c8659019"; // Replace with your deployed contract address
@@ -87,7 +87,7 @@ const ReportIssue = () => {
         // Upload the file to Supabase Storage
         const filePath = `${account}/${Date.now()}-${file.name}`; // Unique path for each user and file
         const { data: fileData, error: fileError } = await supabase.storage
-          .from("points") // Replace with your Supabase bucket name
+          .from("store") // Replace with your Supabase bucket name
           .upload(filePath, file);
   
         if (fileError) {
@@ -96,7 +96,7 @@ const ReportIssue = () => {
   
         // Get the public URL of the uploaded file
         const { data: publicUrlData } = supabase.storage
-          .from("points")
+          .from("store")
           .getPublicUrl(filePath);
         const fileUrl = publicUrlData.publicUrl;
   
@@ -117,7 +117,7 @@ const ReportIssue = () => {
   
         // Insert entry into the User_Details table
         const { data: insertData, error: insertError } = await supabase
-          .from("User_Details") // Replace with your table name
+          .from("users") // Replace with your table name
           .insert([
             {
               Report_ID: reportId,
