@@ -151,7 +151,7 @@ function AllReports() {
                   <p className="report-location">{report.location}</p>
                 </div>
                 <div className="report-stats">
-                  <span>Points: {report.points}</span>
+                  {/* <span>Points: {report.points}</span> */}
                   <span>Upvotes: {report.upvotes}</span>
                   <span>Downvotes: {report.downvotes}</span>
                 </div>
