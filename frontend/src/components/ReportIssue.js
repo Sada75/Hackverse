@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { createClient } from "@supabase/supabase-js"; // Import Supabase client
 import { contractABI } from "../utils/contractABI"; // Import ABI from utils folder
 import '../styles/shared.css';
 import Header from "./Header";
 import Footer from "./Footer";
-
-// Supabase configuration
-const supabaseUrl = "https://ctfksicqlnydmtqubupk.supabase.co"; // Replace with your Supabase project URL
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0ZmtzaWNxbG55ZG10cXVidXBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MjQ2MTQsImV4cCI6MjA1MjIwMDYxNH0.lNx0ezQwFSAlSBGtZb-XhDNoXaTUI6Ci4PSeYdJ7pM0"; // Replace with your Supabase anon key
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 const contractAddress = "0xa0393b172c532f3b2b0cba1088822579c8659019"; // Replace with your deployed contract address
 
@@ -18,7 +12,6 @@ const ReportIssue = () => {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [file, setFile] = useState(null); // Store the selected file
   const [account, setAccount] = useState("");
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
@@ -27,16 +20,20 @@ const ReportIssue = () => {
   useEffect(() => {
     const initialize = async () => {
       if (window.ethereum) {
+        // Create a new BrowserProvider for ethers.js v6
         const _provider = new ethers.BrowserProvider(window.ethereum);
         setProvider(_provider);
 
+        // Request account access
         const accounts = await _provider.send("eth_requestAccounts", []);
         setAccount(accounts[0]);
 
+        // Create a contract instance
         const signer = await _provider.getSigner();
         const _contract = new ethers.Contract(contractAddress, contractABI, signer);
         setContract(_contract);
 
+        // Fetch user reports
         fetchUserReports(_contract, accounts[0]);
       } else {
         alert("Please install MetaMask!");
@@ -48,7 +45,7 @@ const ReportIssue = () => {
   const fetchUserReports = async (contract, userAddress) => {
     try {
       const reports = [];
-      const totalReports = await contract.reportCount();
+      const totalReports = await contract.reportCount(); // Get the total number of reports
       for (let i = 1; i <= totalReports; i++) {
         const report = await contract.getReport(i);
         if (report[0].toLowerCase() === userAddress.toLowerCase()) {
@@ -71,88 +68,34 @@ const ReportIssue = () => {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const uploadedFile = e.target.files[0];
-    if (uploadedFile) {
-      setFile(uploadedFile); // Store the file for later upload
-      alert("File selected: " + uploadedFile.name);
-    } else {
-      alert("Please select a file to upload.");
-    }
-  };
-
   const handleSubmitReport = async () => {
-    if (category && description && location && file) {
+    if (category && description && location) {
       try {
-        // Upload the file to Supabase Storage
-        const filePath = `${account}/${Date.now()}-${file.name}`; // Unique path for each user and file
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("store") // Replace with your Supabase bucket name
-          .upload(filePath, file);
-  
-        if (fileError) {
-          throw fileError;
-        }
-  
-        // Get the public URL of the uploaded file
-        const { data: publicUrlData } = supabase.storage
-          .from("store")
-          .getPublicUrl(filePath);
-        const fileUrl = publicUrlData.publicUrl;
-  
-        // Submit the report to the smart contract
         const tx = await contract.submitReport(category, description, location);
-        const receipt = await tx.wait();
-  
-        // Extract the Report ID from the transaction receipt (assuming it's logged in the event)
-        const event = receipt.events.find((e) => e.event === "ReportSubmitted"); // Replace with your event name
-        const reportId = event?.args?.[0]?.toString(); // Adjust the index if Report ID is not the first argument
-  
-        if (!reportId) {
-          throw new Error("Unable to fetch Report ID from transaction.");
-        }
-  
-        // Get points mapped to the user address from the smart contract
-        const userPoints = await contract.points(account);
-  
-        // Insert entry into the User_Details table
-        const { data: insertData, error: insertError } = await supabase
-          .from("users") // Replace with your table name
-          .insert([
-            {
-              Report_ID: reportId,
-              User_address: account,
-              points: userPoints.toString(),
-              media: fileUrl,
-            },
-          ]);
-  
-        if (insertError) {
-          throw insertError;
-        }
-  
-        alert("Report submitted successfully and entry added to the database!");
+        await tx.wait();
+        alert("Report submitted successfully!");
         setCategory("");
         setDescription("");
         setLocation("");
-        setFile(null);
-  
+
+        // Refresh the user's reports
         fetchUserReports(contract, account);
       } catch (error) {
         console.error("Error submitting report:", error);
-        alert("Failed to submit report or update database.");
+        alert("Failed to submit report.");
       }
     } else {
-      alert("Please provide all details and upload a file.");
+      alert("Please provide category, description, and location.");
     }
   };
-  
 
   const handleUpvote = async (reportId) => {
     try {
       const tx = await contract.upvoteReport(reportId);
       await tx.wait();
       alert("Report upvoted successfully!");
+
+      // Refresh the user's reports
       fetchUserReports(contract, account);
     } catch (error) {
       console.error("Error upvoting report:", error);
@@ -165,6 +108,8 @@ const ReportIssue = () => {
       const tx = await contract.downvoteReport(reportId);
       await tx.wait();
       alert("Report downvoted successfully!");
+
+      // Refresh the user's reports
       fetchUserReports(contract, account);
     } catch (error) {
       console.error("Error downvoting report:", error);
@@ -177,6 +122,7 @@ const ReportIssue = () => {
       const tx = await contract.markReportAsResolved(reportId);
       await tx.wait();
       alert("Report marked as resolved successfully!");
+      // Refresh the user's reports
       fetchUserReports(contract, account);
     } catch (error) {
       console.error("Error marking report as resolved:", error);
@@ -187,9 +133,11 @@ const ReportIssue = () => {
   return (
     <div className="page-container">
       <Header />
+      
       <main className="gradient-bg main-content">
         <div className="dashboard-container">
           <h1 className="page-title">Report an Issue</h1>
+          
           <div className="report-form-card">
             <div className="form-grid">
               <div className="input-group">
@@ -202,6 +150,7 @@ const ReportIssue = () => {
                   onChange={(e) => setCategory(e.target.value)}
                 />
               </div>
+              
               <div className="input-group">
                 <label className="input-label">Description</label>
                 <textarea
@@ -209,9 +158,10 @@ const ReportIssue = () => {
                   placeholder="Describe the issue in detail..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  style={{ minHeight: "120px" }}
+                  style={{ minHeight: '120px' }}
                 />
               </div>
+              
               <div className="input-group">
                 <label className="input-label">Location</label>
                 <input
@@ -222,19 +172,13 @@ const ReportIssue = () => {
                   onChange={(e) => setLocation(e.target.value)}
                 />
               </div>
-              <div className="input-group">
-                <label className="input-label">Upload File</label>
-                <input
-                  className="input-field"
-                  type="file"
-                  onChange={(e) => handleFileUpload(e)}
-                />
-              </div>
+              
               <button className="button-primary" onClick={handleSubmitReport}>
                 Submit Report
               </button>
             </div>
           </div>
+
           <h2 className="section-title">Your Reports</h2>
           <div className="dashboard-grid">
             {userReports.map((report) => (
@@ -280,6 +224,7 @@ const ReportIssue = () => {
           </div>
         </div>
       </main>
+      
       <Footer />
     </div>
   );
